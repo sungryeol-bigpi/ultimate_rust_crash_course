@@ -24,10 +24,7 @@ fn expensive_sum(v: Vec<i32>) -> i32 {
     // In the closures for both the .filter() and .map() the argument will be a reference, so you'll
     // either need to dereference the argument once in the parameter list like this: `|&x|` or you
     // will need to dereference it each time you use it in the expression like this: `*x`
-    v.iter()
-        .filter(|&x| x % 2 == 0)
-        .map(|&x| x * x )
-        .sum()
+    v.iter().filter(|&x| x % 2 == 0).map(|&x| x * x).sum()
 }
 
 fn pause_ms(ms: u64) {
@@ -42,9 +39,7 @@ fn main() {
     // the code and see the Child thread output in the middle of the main thread's letters
     //
     //let handle = ...
-    let handle = thread::spawn(move || {
-        expensive_sum(my_vector)
-    });
+    let handle = thread::spawn(move || expensive_sum(my_vector));
 
     // While the child thread is running, the main thread will also do some work
     for letter in vec!["a", "b", "c", "d", "e", "f"] {
@@ -106,6 +101,28 @@ fn main() {
     // On the child threads print out the values you receive. Close the sending side in the main
     // thread by calling `drop(tx)` (assuming you named your sender channel variable `tx`).  Join
     // the child threads.
-    
-    println!("Main thread: Exiting.")
+
+    let mut vec: Vec<i64> = Vec::with_capacity(39);
+    for _ in 0..vec.capacity() {
+        vec.push(rand::random());
+    };
+    let (s, r) = crossbeam::unbounded();
+    let handle_sender = thread::spawn(move || {
+        for i in vec {
+            pause_ms(10);
+            s.send(i).unwrap();
+        }
+        drop(s);
+    });
+
+    let handle_receiver = thread::spawn(move || {
+        for recv in r {
+            println!("received from parent thread {}", recv);
+        }
+    });
+
+    // handle_sender.join().unwrap();
+    handle_receiver.join().unwrap();
+
+    println!("Main thread: Exiting.");
 }
