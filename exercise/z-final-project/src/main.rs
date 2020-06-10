@@ -25,47 +25,54 @@
 //
 //     let positive_number: u32 = some_string.parse().expect("Failed to parse a number");
 
+use clap::Clap;
+
+#[derive(Clap)]
+#[clap(version = "1.0", author = "Sungryeol Park")]
+struct Opts {
+    #[clap(index = 1, required = true)]
+    input: String,
+    #[clap(index = 2, required = true, default_value = "no_value")]
+    sigma: String,
+    #[clap(short = "o", default_value = "no_value")]
+    output: String,
+    #[clap(short = "e", required = true)]
+    effect: String,
+    // #[clap(short = "f", default_value = "float_value")]
+}
 
 fn main() {
+
+    let opts: Opts = Opts::parse();
+    let infile = opts.input;
+    let outfile = if opts.output == "no_value" { format!("out_{}", infile) } else { opts.output };
+    let sigma = opts.sigma;
+    println!("input {} output {} sigma {}", infile, outfile, sigma);
+
     // 1. First, you need to implement some basic command-line argument handling
     // so you can make your program do different things.  Here's a little bit
     // to get you started doing manual parsing.
     //
     // Challenge: If you're feeling really ambitious, you could delete this code
     // and use the "clap" library instead: https://docs.rs/clap/2.32.0/clap/
-    let mut args: Vec<String> = std::env::args().skip(1).collect();
-    if args.is_empty() {
-        print_usage_and_exit();
-    }
-    let subcommand = args.remove(0);
-    match subcommand.as_str() {
+    // let mut args: Vec<String> = std::env::args().skip(1).collect();
+    // if args.is_empty() {
+    //     print_usage_and_exit();
+    // }
+    match opts.effect.as_str() {
         // EXAMPLE FOR CONVERSION OPERATIONS
         "blur" => {
-            if args.len() < 2 {
-                print_usage_and_exit();
-            }
-            let infile = args.remove(0);
-            let outfile = args.remove(0);
-            let sigma:f32 = if args.len() <= 3 {
-                let res = args.remove(0).parse::<f32>();
-                if res.is_ok() { res.unwrap() } else { 2.0 }
-            } else { 2.0 };
-            println!("image blurring... {} sigma", sigma);
-            blur(infile, outfile, sigma);
-        },
+            let sigma_f: f32 = if sigma == "no_value" { 2.0 } else {
+                sigma.parse::<f32>().expect("sigma should be a float value")
+            };
+            blur(infile, outfile, sigma_f);
+        }
 
         "brighten" => {
-            if args.len() < 2 {
-                print_usage_and_exit();
-            }
-            let infile = args.remove(0);
-            let outfile = args.remove(0);
-            let sigma:i32 = if args.len() <= 3 {
-                let res = args.remove(0).parse::<i32>();
-                if res.is_ok() { res.unwrap() } else { 100 }
-            } else { 100 };
-            println!("image brightening... {} sigma", sigma);
-            brighten(infile, outfile, sigma);
+            let sigma_i: i32 = if sigma == "no_value" { 100 } else {
+                sigma.parse::<i32>().expect("sigma should be an integer value")
+            };
+            brighten(infile, outfile, sigma_i);
         }
 
         // **OPTION**
@@ -82,10 +89,10 @@ fn main() {
 
         // A VERY DIFFERENT EXAMPLE...a really fun one. :-)
         "fractal" => {
-            if args.len() != 1 {
-                print_usage_and_exit();
-            }
-            let outfile = args.remove(0);
+            // if args.len() != 1 {
+            //     print_usage_and_exit();
+            // }
+            // let outfile = args.remove(0);
             fractal(outfile);
         }
 
@@ -95,7 +102,7 @@ fn main() {
         // For everything else...
         _ => {
             print_usage_and_exit();
-        },
+        }
     }
 }
 
@@ -153,7 +160,6 @@ fn rotate(infile: String, outfile: String) {
 
     // See blur() for an example of how to save the image.
 }
-
 
 fn invert(infile: String, outfile: String) {
     // See blur() for an example of how to open an image.
