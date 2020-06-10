@@ -26,6 +26,7 @@
 //     let positive_number: u32 = some_string.parse().expect("Failed to parse a number");
 
 use clap::Clap;
+use regex::Regex;
 
 #[derive(Clap)]
 #[clap(version = "1.0", author = "Sungryeol Park")]
@@ -42,10 +43,13 @@ struct Opts {
 }
 
 fn main() {
-
     let opts: Opts = Opts::parse();
     let infile = opts.input;
-    let outfile = if opts.output == "no_value" { format!("out_{}", infile) } else { opts.output };
+    let outfile = if opts.output == "no_value" {
+        format!("out_{}", infile)
+    } else {
+        opts.output
+    };
     let sigma = opts.sigma;
     println!("input {} output {} sigma {}", infile, outfile, sigma);
 
@@ -62,20 +66,45 @@ fn main() {
     match opts.effect.as_str() {
         // EXAMPLE FOR CONVERSION OPERATIONS
         "blur" => {
-            let sigma_f: f32 = if sigma == "no_value" { 2.0 } else {
+            let sigma_f: f32 = if sigma == "no_value" {
+                2.0
+            } else {
                 sigma.parse::<f32>().expect("sigma should be a float value")
             };
             blur(infile, outfile, sigma_f);
         }
 
         "brighten" => {
-            let sigma_i: i32 = if sigma == "no_value" { 100 } else {
-                sigma.parse::<i32>().expect("sigma should be an integer value")
+            let sigma_i: i32 = if sigma == "no_value" {
+                100
+            } else {
+                sigma
+                    .parse::<i32>()
+                    .expect("sigma should be an integer value")
             };
             brighten(infile, outfile, sigma_i);
         }
 
         // **OPTION**
+        "crop" => {
+            let re =
+                Regex::new(r"^(\d+),(\d+),(\d+),(\d+)$")
+                    .expect("failed to compile regex");
+            let caps = re.captures(sigma.as_str()).expect("sigma should be x/y/width/height");
+            let x: u32 = caps.get(1).unwrap().as_str()
+                .parse::<u32>()
+                .expect("x should be unsigned integer");
+            let y: u32 = caps.get(2).unwrap().as_str()
+                .parse::<u32>()
+                .expect("y should be unsigned integer");
+            let width: u32 = caps.get(3).unwrap().as_str()
+                .parse::<u32>()
+                .expect("width should be unsigned integer");
+            let height: u32 = caps.get(4).unwrap().as_str()
+                .parse::<u32>()
+                .expect("height should be unsigned integer");
+            crop(infile, outfile, x, y, width, height);
+        }
         // Crop -- see the crop() function below
 
         // **OPTION**
@@ -134,16 +163,12 @@ fn brighten(infile: String, outfile: String, sigma: i32) {
     img2.save(outfile).expect("Failed writing OUTFILE");
 }
 
-fn crop(infile: String, outfile: String) {
-    // See blur() for an example of how to open an image.
-
-    // .crop() takes four arguments: x: u32, y: u32, width: u32, height: u32
-    // You may hard-code them, if you like.  It returns a new image.
-
-    // Challenge: parse the four values from the command-line and pass them
-    // through to this function.
-
-    // See blur() for an example of how to save the image.
+fn crop(infile: String, outfile: String, x: u32, y: u32, width: u32, height: u32) {
+    println!("cropping x {} y {} width {} height {}", x, y, width, height);
+    println!("crop does not work at current version")
+    // let img = image::open(infile).expect("failed to open Infile");
+    // let img2 = img.crop(x, y, width, height);
+    // img2.save(outfile).expect("failed writing outfile");
 }
 
 fn rotate(infile: String, outfile: String) {
